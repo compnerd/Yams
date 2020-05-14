@@ -21,7 +21,8 @@ target_compile_definitions(Yams PRIVATE
 
 target_link_libraries(Yams PRIVATE
   CYaml
-  ${CORELIBS_FOUNDATION})
+  $<$<NOT:$<PLATFORM_ID:Darwin>>:dispatch>
+  $<$<NOT:$<PLATFORM_ID:Darwin>>:Foundation>)
 set_target_properties(Yams PROPERTIES
   Swift_MODULE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/swift
   INTERFACE_COMPILE_OPTIONS "SHELL:-Xcc -I$<TARGET_PROPERTY:CYaml,INCLUDE_DIRECTORIES>"
