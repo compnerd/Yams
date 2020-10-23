@@ -14,6 +14,19 @@ import Foundation
 import ucrt
 #endif
 
+#if canImport(Darwin)
+import Darwin
+fileprivate let cpow: (_: Double, _: Double) -> Double = Darwin.pow
+#elseif canImport(ucrt)
+import ucrt
+fileprivate let cpow: (_: Double, _: Double) -> Double = ucrt.pow
+#elseif canImport(Glibc)
+import Glibc
+fileprivate let cpow: (_: Double, _: Double) -> Double = Glibc.pow
+#else
+#error("unknown libc")
+#endif
+
 public extension Node {
     /// Initialize a `Node` with a value of `NodeRepresentable`.
     ///
@@ -130,13 +143,11 @@ private extension TimeInterval {
     func separateFractionalSecond(withPrecision precision: Int) -> (integral: TimeInterval, fractional: Int) {
         var integral = 0.0
         let fractional = modf(self, &integral)
-        // Can't use `pow` free function due to https://bugs.swift.org/browse/TF-1203.
-        // TODO: Remove condition after that bug is fixed.
-        #if canImport(TensorFlow)
-        let radix = Double.pow(10.0, Double(precision))
-        #else
-        let radix = pow(10.0, Double(precision))
-        #endif
+
+        // TODO(TF-1203): Can't use `pow` free function due to
+        // https://bugs.swift.org/browse/TF-1203.
+        let radix = cpow(10.0, Double(precision))
+
         let rounded = Int((fractional * radix).rounded())
         let quotient = rounded / Int(radix)
         return quotient != 0 ? // carry-up?
